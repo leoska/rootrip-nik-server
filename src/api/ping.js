@@ -1,12 +1,11 @@
-import BaseApi       from '../BaseApi';
-import { method }    from 'utilsMethods';
-import ErrorApiMethod from 'ErrorApiMethod';
+import BaseApi from '../BaseApi';
+import { method } from 'modules/utilsMethods';
 
 @method("GET")
 export default class Ping extends BaseApi {
     /**
      * Базовый конструктор класса
-     * 
+     *
      * @constructor
      * @this Ping
      */
@@ -21,7 +20,7 @@ export default class Ping extends BaseApi {
      * @this Ping
      * @returns {Promise<boolean>}
      */
-    async process({}, {}) {
+    async process({ }, { }) {
         return true;
     }
 

@@ -2,7 +2,7 @@ import express               from 'express';
 import fsExtra               from 'fs-extra';
 import path                  from 'path';
 import http                  from 'http';
-import ErrorApiMethod        from 'ErrorApiMethod';
+import ErrorApiMethod        from 'modules/ErrorApiMethod';
 import colors                from 'colors';
 import Application           from './Application';
 
@@ -235,13 +235,13 @@ export default class HttpServer {
         };
         
         // Добавляем заголовки в middleware
-        this._app.use((req, res, next) => {
-            // Добавляем заголовки во избежания CORS политик
-            res.header("Access-Control-Allow-Origin", "*");
-            res.header("Access-Control-Allow-Methods", "GET, POST, PUT");
-            res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
-            next();
-        });
+        // this._app.use((req, res, next) => {
+        //     // Добавляем заголовки во избежания CORS политик
+        //     res.header("Access-Control-Allow-Origin", "*");
+        //     res.header("Access-Control-Allow-Methods", "GET, POST");
+        //     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+        //     next();
+        // });
 
         // Конвертируем всё в json
         this._app.use(express.json());
@@ -250,7 +250,5 @@ export default class HttpServer {
         this._app.post("/api/:apiName", (req, res) => responseHandler(req, res, 'POST'));
         // Роутинг GET-методов
         this._app.get("/api/:apiName", (req, res) => responseHandler(req, res, 'GET'));
-        // Роутинг PUT-методов
-        this._app.put("/api/:apiName", (req, res) => responseHandler(req, res, 'PUT'));
     }
 }
