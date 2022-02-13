@@ -126,8 +126,8 @@ export default class SendReport extends BaseApi {
 
         const mailOptions = {
             from: "server@troparevo-nikulino.org",
-            // to: this.emailReceiver,
-            to: "leo77551@yandex.ru",
+            to: this.emailReceiver,
+            // to: "leo77551@yandex.ru",
             subject: `[${this._getCategory(data.category)}] Обращение от ${data.name || data.phoneNumber}`,
             text,
             html,
