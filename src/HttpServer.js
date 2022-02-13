@@ -5,12 +5,14 @@ import http                  from 'http';
 import ErrorApiMethod        from 'modules/ErrorApiMethod';
 import colors                from 'colors';
 import Application           from './Application';
+import cors                  from 'cors';
 
 const DEFAULT_HTTP_HOST = "0.0.0.0";
 const DEFAULT_HTTP_PORT = 25565;
 
 const _initApi = Symbol('_initApi');
 const _initExpress = Symbol('_initExpress');
+const _responseHandler = Symbol('_responseHandler');
 
 // Базовый класс Http сервера, который поднимается в Application
 export default class HttpServer {
@@ -168,87 +170,85 @@ export default class HttpServer {
      * @returns {void}
      */
     [_initExpress]() {
-        // Обработка POST/GET запросов классами API
-        const responseHandler = async (req, res, method) => {
-            // req.headers["x-forwarded-for"] <-- этот заголовок обычно вкладывается NGINX'ом
-            const ip = req.headers["x-forwarded-for"] || req.connection.remoteAddress;
-            const apiName = req.params.apiName;
-            const reqParams = Object.assign({}, req.query);
-            const reqBody = Object.assign({}, req.body);
-            const reqHeaders = Object.assign({}, req.headers);
-
-            try {
-                // Обработка SERVER_TERMINATING (503)
-                if (Application.terminating) {
-                    throw new ErrorApiMethod(`Failed to call API [${apiName}]. code: SERVER_TERMINATING`, "SERVER_TERMINATING", 503);
-                }
-                
-                // Обработка Not Implemented (501)
-                const api = this._api[apiName];
-
-                if (!api) {
-                    throw new ErrorApiMethod(`API [${apiName}] NOT FOUND!`, "API_NOT_FOUND", 501);
-                }
-                
-                const apiInstance = new api(method);
-                apiInstance.params = reqParams;
-                apiInstance.body = reqBody;
-                apiInstance.headers = reqHeaders;
-
-                // 200 - OK
-                res.json(await apiInstance.callProcess());
-            } catch(e) {
-                let response;
-
-                if (e instanceof ErrorApiMethod) {
-                    console.error(colors.red(`[HTTP-Server] ${e.stack || e.message}`));
-                    
-                    // Можно просто отправить статус
-                    // res.sendStatus(e.status);
-
-                    res.status(e.status);
-                    response = JSON.stringify({
-                        error: e.code,
-                        message: e.message,
-                        stack: e.stack,
-                    });
-                } else {
-                    // Обработка INTERNAL_SERVER_ERROR (500)
-                    console.error(colors.red(`[HTTP-Server] Request API [${apiName}] failed.\n${e.stack}`));
-
-                    res.status(500);
-                    response = JSON.stringify({
-                        error: "INTERNAL_SERVER_ERROR",
-                        message: e.message,
-                        // TODO: закомментировал пока e.stack, не вижу в нём необходимость
-                        // stack: e.stack,
-                    });
-                }
-
-                // Добавляем заголовок, что тип ответа - json и размер ответа
-                res.header("Content-Type", "application/json; charset=utf-8");
-                res.header("Content-Length", Buffer.byteLength(response, "utf-8"));
-
-                // Отправляем ответ
-                res.end(response);
-            }
-        };
-        
-        // Добавляем заголовки в middleware
-        // this._app.use((req, res, next) => {
-        //     // Добавляем заголовки во избежания CORS политик
-        //     res.header("Access-Control-Allow-Origin", "*");
-        //     res.header("Access-Control-Allow-Methods", "GET, POST");
-        //     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
-        //     next();
-        // });
-
-        // Конвертируем всё в json
+        // Инициализируем MiddleWare для обработки запроса 
+        this._app.use(cors());
         this._app.use(express.json());
+        this._app.use(express.urlencoded({ extended: true }));
 
         // Роутинг POST-методов
-        this._app.post("/api/:apiName", (req, res) => responseHandler(req, res, 'POST'));
+        this._app.post("/api/:apiName", (req, res) => this[_responseHandler](req, res, 'POST'));
+
         // Роутинг GET-методов
-        this._app.get("/api/:apiName", (req, res) => responseHandler(req, res, 'GET'));
+        this._app.get("/api/:apiName", (req, res) => this[_responseHandler](req, res, 'GET'));
+    }
+
+    /**
+     * Обработка POST/GET запросов классами API
+     * 
+     * @async
+     * @private
+     * @param {*} req 
+     * @param {*} res 
+     * @param {String} method 
+     * @returns {Promise<void>}
+     */
+    async [_responseHandler](req, res, method) {
+        // req.headers["x-forwarded-for"] <-- этот заголовок обычно вкладывается NGINX'ом
+        const ip = req.headers["x-forwarded-for"] || req.connection.remoteAddress;
+        const apiName = req.params.apiName;
+        const reqParams = Object.assign({}, req.query);
+        const reqBody = Object.assign({}, req.body);
+        const reqHeaders = Object.assign({}, req.headers);
+
+        try {
+            // Обработка SERVER_TERMINATING (503)
+            if (Application.terminating) {
+                throw new ErrorApiMethod(`Failed to call API [${apiName}]. code: SERVER_TERMINATING`, "SERVER_TERMINATING", 503);
+            }
+            
+            // Обработка Not Implemented (501)
+            const api = this._api[apiName];
+
+            if (!api) {
+                throw new ErrorApiMethod(`API [${apiName}] NOT FOUND!`, "API_NOT_FOUND", 501);
+            }
+            
+            const apiInstance = new api(method);
+            apiInstance.params = reqParams;
+            apiInstance.body = reqBody;
+            apiInstance.headers = reqHeaders;
+
+            // 200 - OK
+            res.json(await apiInstance.callProcess());
+        } catch(e) {
+            let response;
+
+            if (e instanceof ErrorApiMethod) {
+                console.error(colors.red(`[HTTP-Server] ${e.stack || e.message}`));
+
+                res.status(e.status);
+                response = JSON.stringify({
+                    error: e.code,
+                    message: e.message,
+                    stack: e.stack,
+                });
+            } else {
+                // Обработка INTERNAL_SERVER_ERROR (500)
+                console.error(colors.red(`[HTTP-Server] Request API [${apiName}] failed.\n${e.stack}`));
+
+                res.status(500);
+                response = JSON.stringify({
+                    error: "INTERNAL_SERVER_ERROR",
+                    message: e.message,
+                });
+            }
+
+            // Добавляем заголовок, что тип ответа - json и размер ответа
+            res.header("Content-Type", "application/json; charset=utf-8");
+            res.header("Content-Length", Buffer.byteLength(response, "utf-8"));
+
+            // Отправляем ответ
+            res.end(response);
+        }
     }
 }
