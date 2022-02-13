@@ -8,18 +8,33 @@ import colors                from 'colors';
 import Application           from './Application';
 import cors                  from 'cors';
 import crypto                from 'crypto';
-import moment                from 'moment';    
+import moment                from 'moment';
+import fileUpload            from 'express-fileupload';
 
 const DEFAULT_HTTP_HOST = "0.0.0.0";
 const DEFAULT_HTTP_PORT = 25565;
 
 // Размер генерируемого имени файла
 const FILE_LENBYTES_CRYPTO = 16;
+const FILE_MAX_SIZE = 10 * 1024 * 1024;
 
 const _initApi = Symbol('_initApi');
 const _initExpress = Symbol('_initExpress');
 const _responseHandler = Symbol('_responseHandler');
 const _fileUploadHandler = Symbol('_fileUploadHandler');
+
+const MIME_MATCH = {
+    // Images
+    'image/jpeg': 'jpg',
+    'image/png':  'png',
+    'image/gif':  'gif',
+
+    // PDF
+    'application/pdf': 'pdf',
+
+    // ZIP
+    'application/zip': 'zip',
+};
 
 // Базовый класс Http сервера, который поднимается в Application
 export default class HttpServer {
@@ -177,19 +192,25 @@ export default class HttpServer {
      * @returns {void}
      */
     [_initExpress]() {
+        // enable files upload
+        this._app.use(fileUpload({
+            createParentPath: true,
+            limits: { fileSize: FILE_MAX_SIZE },
+        }));
+
         // Инициализируем MiddleWare для обработки запроса 
         this._app.use(cors());
         this._app.use(express.json());
         this._app.use(express.urlencoded({ extended: true }));
+
+        // Заливка файла
+        this._app.post("/api/uploadFile.json", this[_fileUploadHandler].bind(this));
 
         // Роутинг POST-методов
         this._app.post("/api/:apiName.json", (req, res) => this[_responseHandler](req, res, 'POST'));
 
         // Роутинг GET-методов
         this._app.get("/api/:apiName.json", (req, res) => this[_responseHandler](req, res, 'GET'));
-
-        // Заливка файла
-        this._app.post("/api/uploadFile", this[_fileUploadHandler].bind(this));
     }
 
     /**
@@ -264,6 +285,7 @@ export default class HttpServer {
 
     /**
      * Заливка файла на сервер
+     * TODO: нужно рефакторить
      * 
      * @async
      * @private
@@ -280,7 +302,11 @@ export default class HttpServer {
                 throw new Error(`No file uploaded`);
 
             const file = files.file;
-            const newFileName = crypto.randomBytes(FILE_LENBYTES_CRYPTO).toString('base64');
+            const newFileName = crypto.randomBytes(FILE_LENBYTES_CRYPTO).toString('base64').replace(/[+=/-]/g, '').substr(0, 12);
+            const extname = path.extname(file.name);
+
+            if (!MIME_MATCH[file.mimetype])
+                throw new Error(`Invalid file format [${file.mimetype}]`);
 
             const date = moment();
             const folderName = date.format(`YYYY-MM-DD`);
@@ -296,14 +322,15 @@ export default class HttpServer {
                     }
 
                     // Перемещаем файл в пользовательскую папку с именем файлов
-                    file.mv(`${startPath}/ufiles/${folderName}/${FILE_LENBYTES_CRYPTO}.${file.mimetype}`);
+                    file.mv(`${startPath}/ufiles/${folderName}/${newFileName}${extname}`);
 
                     // Отправляем успешный результат заливки файла 
                     res.status(200).json({
-                        name: newFileName,
+                        path: `${folderName}/${newFileName}${extname}`,
+                        name: `${newFileName}${extname}`,
                         size: file.size,
                         mimetype: file.mimetype,
-                        stamp: date,
+                        stamp: date.valueOf(),
                     });
                 } catch(e) {
                     console.error(colors.red(`[HTTP-Server -> _fileUploadHandler (fs.access)] ${e.stack || e.message}`));
