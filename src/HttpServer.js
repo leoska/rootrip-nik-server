@@ -1,18 +1,25 @@
 import express               from 'express';
 import fsExtra               from 'fs-extra';
+import fs                    from 'fs';
 import path                  from 'path';
 import http                  from 'http';
 import ErrorApiMethod        from 'modules/ErrorApiMethod';
 import colors                from 'colors';
 import Application           from './Application';
 import cors                  from 'cors';
+import crypto                from 'crypto';
+import moment                from 'moment';    
 
 const DEFAULT_HTTP_HOST = "0.0.0.0";
 const DEFAULT_HTTP_PORT = 25565;
 
+// Размер генерируемого имени файла
+const FILE_LENBYTES_CRYPTO = 16;
+
 const _initApi = Symbol('_initApi');
 const _initExpress = Symbol('_initExpress');
 const _responseHandler = Symbol('_responseHandler');
+const _fileUploadHandler = Symbol('_fileUploadHandler');
 
 // Базовый класс Http сервера, который поднимается в Application
 export default class HttpServer {
@@ -176,10 +183,13 @@ export default class HttpServer {
         this._app.use(express.urlencoded({ extended: true }));
 
         // Роутинг POST-методов
-        this._app.post("/api/:apiName", (req, res) => this[_responseHandler](req, res, 'POST'));
+        this._app.post("/api/:apiName.json", (req, res) => this[_responseHandler](req, res, 'POST'));
 
         // Роутинг GET-методов
-        this._app.get("/api/:apiName", (req, res) => this[_responseHandler](req, res, 'GET'));
+        this._app.get("/api/:apiName.json", (req, res) => this[_responseHandler](req, res, 'GET'));
+
+        // Заливка файла
+        this._app.post("/api/uploadFile", this[_fileUploadHandler].bind(this));
     }
 
     /**
@@ -249,6 +259,68 @@ export default class HttpServer {
 
             // Отправляем ответ
             res.end(response);
+        }
+    }
+
+    /**
+     * Заливка файла на сервер
+     * 
+     * @async
+     * @private
+     * @param {*} req 
+     * @param {*} res 
+     */
+    async [_fileUploadHandler](req, res) {
+        // req.headers["x-forwarded-for"] <-- этот заголовок обычно вкладывается NGINX'ом
+        const ip = req.headers["x-forwarded-for"] || req.connection.remoteAddress;
+        const files = req.files;
+
+        try {
+            if (!files || !files.file) 
+                throw new Error(`No file uploaded`);
+
+            const file = files.file;
+            const newFileName = crypto.randomBytes(FILE_LENBYTES_CRYPTO).toString('base64');
+
+            const date = moment();
+            const folderName = date.format(`YYYY-MM-DD`);
+            const startPath = process.cwd();
+
+            // Проверяем существует ли необходимая директория (партинация)
+            fs.access(`${startPath}/ufiles/${folderName}`, async (error) => {
+                try {
+                    if (error) {
+                        console.error(colors.red(error.stack));
+                        await fs.promises.mkdir(`${startPath}/ufiles/${folderName}`);
+                        console.info(colors.green(`[HttpServer -> _fileUploadHandler (fs.access)] folder ${folderName} successfully was a created.`));
+                    }
+
+                    // Перемещаем файл в пользовательскую папку с именем файлов
+                    file.mv(`${startPath}/ufiles/${folderName}/${FILE_LENBYTES_CRYPTO}.${file.mimetype}`);
+
+                    // Отправляем успешный результат заливки файла 
+                    res.status(200).json({
+                        name: newFileName,
+                        size: file.size,
+                        mimetype: file.mimetype,
+                        stamp: date,
+                    });
+                } catch(e) {
+                    console.error(colors.red(`[HTTP-Server -> _fileUploadHandler (fs.access)] ${e.stack || e.message}`));
+
+                    res.status(500).end(JSON.stringify({
+                        error: "INTERNAL_SERVER_ERROR",
+                        message: e.message,
+                    }));
+                }
+            });
+        } catch(e) {
+            console.error(colors.red(`[HTTP-Server -> _fileUploadHandler] ${e.stack || e.message}`));
+
+            res.status(500).end(JSON.stringify({
+                error: "INTERNAL_SERVER_ERROR",
+                message: e.message,
+            }));
         }
     }
 }
