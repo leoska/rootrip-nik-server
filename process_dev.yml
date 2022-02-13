@@ -1,0 +1,11 @@
+apps:
+  - script: index.js
+    interpreter_args: node_modules/@babel/node/bin/babel-node.js
+    name: 'rootrip-server'
+    log_date_format: YYYY-MM-DD HH:mm:ss
+    max_memory_restart: '512M'
+    combine_logs: true
+    out_file: logs/rootrip-server-out.log
+    err_file: logs/rootrip-server-err.log
+    env:
+      NODE_ENV : 'development'
