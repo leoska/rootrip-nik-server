@@ -1,0 +1,66 @@
+version: '3.1'
+
+networks:
+  rootrip-network:
+    external: false
+
+volumes:
+  mariadb:
+    driver: local
+  
+services:
+  mariadb:
+    image: mariadb:10.7
+    hostname: mariadb
+    restart: unless-stopped
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./mariadb/initdb.d:/docker-entrypoint-initdb.d
+      - ./mariadb/data:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: p3p2rNht
+    ports:
+      - "3306:3306"
+    networks:
+      - rootrip-network
+    logging:
+      options:
+        max-size: 50m
+
+  nginx:
+    image: nginx:1.21.6
+    hostname: nginx
+    restart: unless-stopped
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./nginx/rootrip-site:/etc/nginx/rootrip-site:ro
+      - ./nginx/mime.types:/etc/nginx/mime.types:ro
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./build:/www/rootrip-nik-app/build:ro
+    environment:
+      - NGINX_HOST=local_troparevo-nikulino.org
+      - NGINX_PORT=80
+    ports:
+      - "8080:80"
+    networks:
+      - rootrip-network
+    logging:
+      options:
+        max-size: 50m
+
+  node:
+    image: node:14.19-buster
+    hostname: node
+    restart: "no"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./:/app
+    # environment:
+    #   COMMAND: NODE_ENV=develop babel-watch /node/index.js
+    ports:
+      - "25565:25565"
+    networks:
+      - rootrip-network
+    depends_on:
+      - mariadb
+      - nginx
