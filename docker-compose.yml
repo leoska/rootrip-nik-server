@@ -50,13 +50,14 @@ services:
 
   node:
     image: node:14.19-buster
+    stdin_open: true
+    tty: true
     hostname: node
     restart: "no"
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - ./:/app
-    # environment:
-    #   COMMAND: NODE_ENV=develop babel-watch /node/index.js
+    command: npm --prefix /app run watch 
     ports:
       - "25565:25565"
     networks:

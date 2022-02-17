@@ -1,6 +1,9 @@
 # Import container with nodejs v14
 FROM node:14.19-buster
 
+# Install PM2 Globally in Container
+RUN npm install -g pm2
+
 # Create app directory
 WORKDIR /app
 
@@ -12,5 +15,4 @@ RUN npm install
 # RUN npm ci --only=production
 
 EXPOSE 25565
-EXPOSE 25569
-CMD [ "npm", "run", "start" ]
+CMD [ "npm", "run", "watch" ]
