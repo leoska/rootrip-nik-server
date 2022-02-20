@@ -1,6 +1,6 @@
 apps:
-  - script: index.js
-    interpreter_args: node_modules/@babel/node/bin/babel-node.js
+  - script: npm
+    args: start
     name: 'rootrip-server'
     log_date_format: YYYY-MM-DD HH:mm:ss
     max_memory_restart: '512M'

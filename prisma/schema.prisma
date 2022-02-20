@@ -1,0 +1,63 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+datasource db {
+    provider = "mysql"
+    url      = env("DATABASE_URL")
+}
+
+generator client {
+    provider = "prisma-client-js"
+    previewFeatures = ["interactiveTransactions"]
+}
+
+model Session {
+    @@map(name: "session")
+    id                String    @db.VarChar(24) @id
+    ip_address        String    @db.VarChar(15)
+    browser           String    @db.TinyText
+    resolution_width  Int       @db.Int
+    resolution_height Int       @db.Int
+    orientation       Orientation
+    memory            Float     @db.Float
+    stamp_create      DateTime  @db.Timestamp() @default(now())
+    last_online       DateTime  @db.Timestamp() @updatedAt()
+    reception         Reception[]
+}
+
+model Events {
+    @@map(name: "event")
+    id                Int       @default(autoincrement()) @id
+    header_img        String    @db.TinyText
+    header            String    @db.Text
+    description       String    @db.Text
+    body              String    @db.Text
+    stamp_create      DateTime  @db.Timestamp() @default(now())
+    stamp_update      DateTime  @db.Timestamp() @updatedAt()
+}
+
+model Reception {
+    @@map(name: "reception")
+    id                Int       @default(autoincrement()) @id
+    name              String    @db.TinyText
+    phone             String    @db.TinyText
+    email             String    @db.TinyText
+    category          String    @db.VarChar(70)
+    body              String    @db.Text
+    session_id        String    @db.VarChar(24)
+    stamp_create      DateTime  @db.Timestamp() @default(now())
+    session           Session   @relation(fields: [session_id], references: [id])
+}
+
+model File {
+    @@map(name: "file")
+    id                Int       @default(autoincrement()) @id
+    mime_type         String    @db.VarChar(100)
+    file_path         String    @db.TinyText
+    stamp_create      DateTime  @db.Timestamp() @default(now())
+}
+
+enum Orientation {
+    portrait
+    landscape
+}

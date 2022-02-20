@@ -2,6 +2,7 @@ import BaseApi from '../BaseApi';
 import { method } from 'modules/utilsMethods';
 import nodemailer from 'nodemailer';
 import colors from 'colors';
+import ErrorApiMethod from 'modules/ErrorApiMethod';
 
 @method("POST")
 export default class SendReport extends BaseApi {
@@ -19,6 +20,26 @@ export default class SendReport extends BaseApi {
         return "info@troparevo-nikulino.org";
     }
 
+    /**
+     * Максимальный размер текста обращения в байтах
+     * 
+     * @getter
+     * @public
+     * @this {SendReport}
+     * @returns {Number}
+     */
+    get maxBodySize() {
+        return 65000;
+    }
+
+    /**
+     * Получение название категории по его типу
+     * 
+     * @private
+     * @param {String} category 
+     * @this {SendReport}
+     * @returns {String}
+     */
     _getCategory(category) {
         switch(category) {
             case 'zhile-nedvizhimost-zemlya':
@@ -73,7 +94,10 @@ export default class SendReport extends BaseApi {
         const decodeBuffer = Buffer.from(buffer, 'base64').toString();
         const data = JSON.parse(decodeBuffer);
 
-        console.info(colors.blue(data));
+        data['textBody'] = String(data['textBody'] || '');
+
+        if (data.textBody.length > this.maxBodySize)
+            throw new ErrorApiMethod(`Payload Too Large`, "textBody size is greater that 65000 bytes.", 413);
 
         const transporter = nodemailer.createTransport({
             host: "smtp.yandex.ru",
@@ -126,8 +150,8 @@ export default class SendReport extends BaseApi {
 
         const mailOptions = {
             from: "server@troparevo-nikulino.org",
-            to: this.emailReceiver,
-            // to: "leo77551@yandex.ru",
+            // to: this.emailReceiver,
+            to: "leo77551@yandex.ru",
             subject: `[${this._getCategory(data.category)}] Обращение от ${data.name || data.phoneNumber}`,
             text,
             html,
