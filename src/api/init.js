@@ -1,7 +1,9 @@
 import BaseApi from '../BaseApi';
 import { method } from 'modules/utilsMethods';
+import crypto from 'crypto';
+import prismaCall from 'modules/prisma';
 
-@method("GET")
+@method("POST")
 export default class Init extends BaseApi {
     /**
      * Базовый конструктор класса
@@ -13,7 +15,27 @@ export default class Init extends BaseApi {
         super();
     }
 
-    get os(userAgent) {
+    /**
+     * Размер идентификатора сессии
+     * 
+     * @getter
+     * @public
+     * @this {Init}
+     * @returns {Number}
+     */
+    get sessionBytesLength() {
+        return 16;
+    }
+
+    /**
+     * Определение операционной системы пользователя
+     * 
+     * @public
+     * @param {String} userAgent
+     * @this {Init}
+     * @returns {String}
+     */
+    getOs(userAgent) {
         if (userAgent.indexOf("Win") != -1)
             return "Windows OS";
         if (userAgent.indexOf("Mac") != -1) 
@@ -35,9 +57,26 @@ export default class Init extends BaseApi {
      * @this Init
      * @returns {Promise<boolean>}
      */
-    async process({ }, { }) {
+    async process({ }, { browser, resolution, orientation, memory, offsetTimezone }) {
+        const sessionId = crypto.randomBytes(this.sessionBytesLength).toString('base64');
 
-        return true;
+        await prismaCall('session.create', {
+            data: {
+                id: sessionId,
+                ip_address: this._ip,
+                browser,
+                os: this.getOs(browser),
+                resolution_width: resolution.width,
+                resolution_height: resolution.height,
+                orientation,
+                memory,
+                offset_timezone: offsetTimezone,
+            }
+        });
+
+        return {
+            sessionId
+        };
     }
 
 }

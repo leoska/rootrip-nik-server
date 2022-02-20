@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "babel-node index.js",
-    "watch": "nodemon --exec babel-node index.js",
+    "start": "set \"NODE_ENV=production\" && babel-node index.js",
+    "watch": "set \"NODE_ENV=development\" && nodemon --exec babel-node index.js",
     "local-docker-up": "docker-compose -f ./docker-compose.yml up -d",
     "local-docker-down": "docker-compose -f ./docker-compose.yml down"
   },
@@ -33,6 +33,7 @@
   },
   "homepage": "https://github.com/leoska/rootrip-nik-server#readme",
   "dependencies": {
+    "@prisma/client": "^3.9.2",
     "colors": "^1.4.0",
     "cors": "^2.8.5",
     "crypto": "^1.0.1",

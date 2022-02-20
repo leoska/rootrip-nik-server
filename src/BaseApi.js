@@ -7,6 +7,7 @@ export default class BaseApi {
     _params = null;
     _body = null;
     _headers = null;
+    _ip = '';
 
     /**
      * Статическая функция на то, что класс является API-методом
@@ -23,7 +24,7 @@ export default class BaseApi {
      * @setter
      * @public
      * @param {Object} params
-     * @this BaseApi
+     * @this {BaseApi}
      */
     set params(params) {
         this._params = params;
@@ -35,7 +36,7 @@ export default class BaseApi {
      * @setter
      * @public
      * @param {Object} body
-     * @this BaseApi
+     * @this {BaseApi}
      */
     set body(body) {
         this._body = body;
@@ -47,10 +48,22 @@ export default class BaseApi {
      * @setter
      * @public
      * @param {Object} headers
-     * @this BaseApi
+     * @this {BaseApi}
      */
     set headers(headers) {
         this._headers = headers;
+    }
+
+    /**
+     * Сеттер для ip-адреса
+     * 
+     * @setter
+     * @public
+     * @param {String} ip
+     * @this {BaseApi}
+     */
+    set ip(ip) {
+        this._ip = ip;
     }
 
     /**
@@ -64,6 +77,7 @@ export default class BaseApi {
         this._params = null;
         this._body = null;
         this._headers = null;
+        this._ip = '';
     }
     
     /**
@@ -73,6 +87,7 @@ export default class BaseApi {
      * @virtual
      * @param {Object} [params] - Параметры запроса
      * @param {Object} [body] - Тело запроса
+     * @this {BaseApi}
      * @returns {any}
      */
     async process(data, body) {
@@ -84,7 +99,7 @@ export default class BaseApi {
      * 
      * @async
      * @public
-     * @this BaseApi
+     * @this {BaseApi}
      * @returns {Promise<Object>}
      */
     async callProcess() {

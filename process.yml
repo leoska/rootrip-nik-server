@@ -1,7 +1,7 @@
 apps:
-  - script: npm
+  - name: 'ROOTRIP-NIK (production)'
+    script: npm
     args: start
-    name: 'rootrip-server'
     log_date_format: YYYY-MM-DD HH:mm:ss
     max_memory_restart: '512M'
     combine_logs: true

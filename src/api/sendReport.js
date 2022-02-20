@@ -3,6 +3,7 @@ import { method } from 'modules/utilsMethods';
 import nodemailer from 'nodemailer';
 import colors from 'colors';
 import ErrorApiMethod from 'modules/ErrorApiMethod';
+import prismaCall from 'modules/prisma';
 
 @method("POST")
 export default class SendReport extends BaseApi {
@@ -16,6 +17,14 @@ export default class SendReport extends BaseApi {
         super();
     }
 
+    /**
+     * Почта получателя
+     * 
+     * @getter
+     * @public
+     * @this {SendReport}
+     * @returns {String}
+     */
     get emailReceiver() {
         return "info@troparevo-nikulino.org";
     }

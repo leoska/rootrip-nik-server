@@ -48,16 +48,37 @@ services:
       options:
         max-size: 50m
 
-  node:
-    image: node:14.19-buster
+  # node:
+  #   image: node:14.19-buster
+  #   stdin_open: true
+  #   tty: true
+  #   hostname: node
+  #   restart: "no"
+  #   volumes:
+  #     - /etc/localtime:/etc/localtime:ro
+  #     - ./:/app
+  #   command: npm --prefix /app run watch 
+  #   ports:
+  #     - "25565:25565"
+  #   networks:
+  #     - rootrip-network
+  #   depends_on:
+  #     - mariadb
+  #     - nginx
+
+  rootrip-nik-server:
+    image: rootrip-nik-server:latest
     stdin_open: true
     tty: true
     hostname: node
     restart: "no"
     volumes:
       - /etc/localtime:/etc/localtime:ro
-      - ./:/app
-    command: npm --prefix /app run watch 
+      - ./src:/app/src:ro
+      - ./settings:/app/settings:ro
+      - ./ufiles:/app/ufiles:rw
+      - ./build:/app/build:ro
+      - ./index.js:/app/index.js:ro
     ports:
       - "25565:25565"
     networks:
