@@ -99,7 +99,7 @@ export default class SendReport extends BaseApi {
      * @this SendReport
      * @returns {Promise<boolean>}
      */
-    async process({ }, { buffer }) {
+    async process({ session }, { buffer }) {
         const decodeBuffer = Buffer.from(buffer, 'base64').toString();
         const data = JSON.parse(decodeBuffer);
 

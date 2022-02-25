@@ -70,7 +70,7 @@ services:
     image: rootrip-nik-server:latest
     stdin_open: true
     tty: true
-    hostname: node
+    hostname: rootrip-nik-server
     restart: "no"
     volumes:
       - /etc/localtime:/etc/localtime:ro

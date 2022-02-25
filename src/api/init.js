@@ -2,6 +2,7 @@ import BaseApi from '../BaseApi';
 import { method } from 'modules/utilsMethods';
 import crypto from 'crypto';
 import prismaCall from 'modules/prisma';
+import colors from 'colors';
 
 @method("POST")
 export default class Init extends BaseApi {
@@ -57,8 +58,20 @@ export default class Init extends BaseApi {
      * @this Init
      * @returns {Promise<boolean>}
      */
-    async process({ }, { browser, resolution, orientation, memory, offsetTimezone }) {
+    async process({ }, { browser, resolution, orientation, memory, offsetTimezone, protocol }) {
         const sessionId = crypto.randomBytes(this.sessionBytesLength).toString('base64');
+
+        const logObject = {
+            sessionId,
+            browser, 
+            resolution, 
+            orientation,
+            memory, 
+            offsetTimezone, 
+            protocol,
+        }
+
+        console.info(colors.green(`New session: ${JSON.stringify(logObject)}`));
 
         await prismaCall('session.create', {
             data: {
@@ -75,7 +88,7 @@ export default class Init extends BaseApi {
         });
 
         return {
-            sessionId
+            sessionId,
         };
     }
 
