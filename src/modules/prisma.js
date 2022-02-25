@@ -1,7 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import _ from 'lodash';
 
-
 const AMOUNT_ATTEMPT_RETRIES = 3;
 const prismaDb = new PrismaClient();
 

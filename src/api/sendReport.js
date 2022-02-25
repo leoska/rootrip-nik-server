@@ -4,6 +4,7 @@ import nodemailer from 'nodemailer';
 import colors from 'colors';
 import ErrorApiMethod from 'modules/ErrorApiMethod';
 import prismaCall from 'modules/prisma';
+import { existsSync } from 'fs-extra';
 
 @method("POST")
 export default class SendReport extends BaseApi {
@@ -92,43 +93,8 @@ export default class SendReport extends BaseApi {
         }
     }
 
-    /**
-     * Дебаговый API-метод для проверки работы сервера
-     *
-     * @override
-     * @this SendReport
-     * @returns {Promise<boolean>}
-     */
-    async process({ session }, { buffer }) {
-        const decodeBuffer = Buffer.from(buffer, 'base64').toString();
-        const data = JSON.parse(decodeBuffer);
-
-        data['textBody'] = String(data['textBody'] || '');
-
-        if (data.textBody.length > this.maxBodySize)
-            throw new ErrorApiMethod(`Payload Too Large`, "textBody size is greater that 65000 bytes.", 413);
-
-        const transporter = nodemailer.createTransport({
-            host: "smtp.yandex.ru",
-            port: 465,
-            secure: true,
-            auth: {
-                user: "server@troparevo-nikulino.org",
-                pass: "aA12345a",
-            }
-        });
-
-        const text = `
-            Имя: ${data.userName}\n
-            Почта: ${data.email}\n
-            Телефон: ${data.phoneNumber}\n
-            Категория: ${this._getCategory(data.category)}\n
-            Приложен ли файл: ${data.fileInfo ? "Да" : "Нет"}\n
-            Текст обращения:\n
-            ${data.textBody}
-        `;
-
-        const html = `
+    _getHtml(data) {
+        return  `
             <div style="display: flex; flex-direction: column">
                 <h3>
                     Основные данные:
@@ -156,6 +122,45 @@ export default class SendReport extends BaseApi {
                 <span>${data.textBody}</span>
             </div>
         `;
+    };
+
+    /**
+     * Дебаговый API-метод для проверки работы сервера
+     *
+     * @override
+     * @this SendReport
+     * @returns {Promise<boolean>}
+     */
+    async process({ session }, { buffer }) {
+        const decodeBuffer = Buffer.from(buffer, 'base64').toString();
+        const data = JSON.parse(decodeBuffer);
+
+        data['textBody'] = String(data['textBody'] || '');
+
+        if (data.textBody.length > this.maxBodySize)
+            throw new ErrorApiMethod("textBody size is greater that 65000 bytes.", "Payload Too Large", 413);
+
+        const transporter = nodemailer.createTransport({
+            host: "smtp.yandex.ru",
+            port: 465,
+            secure: true,
+            auth: {
+                user: "server@troparevo-nikulino.org",
+                pass: "aA12345a",
+            }
+        });
+
+        const text = `
+            Имя: ${data.userName}\n
+            Почта: ${data.email}\n
+            Телефон: ${data.phoneNumber}\n
+            Категория: ${this._getCategory(data.category)}\n
+            Приложен ли файл: ${data.fileInfo ? "Да" : "Нет"}\n
+            Текст обращения:\n
+            ${data.textBody}
+        `;
+
+        const html = this._getHtml(data);
 
         const mailOptions = {
             from: "server@troparevo-nikulino.org",

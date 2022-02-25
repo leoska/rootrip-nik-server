@@ -326,11 +326,13 @@ export default class HttpServer {
 
                     // Отправляем успешный результат заливки файла 
                     res.status(200).json({
-                        path: `${folderName}/${newFileName}${extname}`,
-                        name: `${newFileName}${extname}`,
-                        size: file.size,
-                        mimetype: file.mimetype,
-                        stamp: date.valueOf(),
+                        response: {
+                            path: `${folderName}/${newFileName}${extname}`,
+                            name: `${newFileName}${extname}`,
+                            size: file.size,
+                            mimetype: file.mimetype,
+                            stamp: date.valueOf(),
+                        }
                     });
                 } catch(e) {
                     console.error(colors.red(`[HTTP-Server -> _fileUploadHandler (fs.access)] ${e.stack || e.message}`));

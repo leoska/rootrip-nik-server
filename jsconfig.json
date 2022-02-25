@@ -6,7 +6,8 @@
         "experimentalDecorators": true,
         "emitDecoratorMetadata": true,
         "paths": {
-            "modules/*": ["./src/modules/*"]
+            "modules/*": ["./src/modules/*"],
+            "settings/*": ["./settings/*"]
         }
     },
     "exclude": ["node_modules"]
