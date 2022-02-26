@@ -10,7 +10,7 @@
     "local-docker-up": "docker-compose -f ./docker-compose.yml up -d",
     "local-docker-down": "docker-compose -f ./docker-compose.yml down",
     "prisma-migrate-dev": "npx prisma migrate dev --schema=./prisma/dev-migrate/schema.prisma --name init",
-    "prisma-migrate-deploy": "npx prisma migrate deploy --schema=./prisma/production/schema.prisma --name init"
+    "prisma-migrate-deploy": "npx prisma migrate deploy --schema=./prisma/production/schema.prisma"
   },
   "repository": {
     "type": "git",

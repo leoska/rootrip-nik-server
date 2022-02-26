@@ -27,6 +27,7 @@ model Session {
     reception         Reception[]
     error             Error[]
     user              User?
+    file              File[]
 }
 
 model Events {
@@ -59,7 +60,9 @@ model File {
     id                Int       @default(autoincrement()) @id
     mime_type         String    @db.VarChar(100)
     file_path         String    @db.TinyText()
+    session_id        String    @db.VarChar(24)
     stamp_create      DateTime  @db.Timestamp() @default(now())
+    session           Session   @relation(fields: [session_id], references: [id])
 }
 
 model Error {
@@ -85,6 +88,18 @@ model User {
     role            Role        @default(user)
     is_active       Active      @default(yes)
     session         Session     @relation(fields: [last_session], references: [id])
+    telegram        Telegram?
+}
+
+model Telegram {
+    @@map(name: "telegram")
+    user_id         Int?
+    username        String       @db.VarChar(255)
+    telegram_id     Int?         @db.Int()
+    stamp_create    DateTime     @db.Timestamp() @default(now())
+    is_active       Active       @default(yes)
+    user            User?        @relation(fields: [user_id], references: [id])
+    @@id([username])
 }
 
 enum Orientation {

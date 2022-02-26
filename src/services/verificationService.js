@@ -1,3 +1,5 @@
+import TelegramBot from './telegramBot';
+
 class VerificationService {
     /**
      * Базовый конструктор
@@ -6,7 +8,13 @@ class VerificationService {
         
     }
 
-    
+    static get actions() {
+        return [
+            'USER_LOGIN',
+        ]
+    }
+
+
 }
 
 const service = new VerificationService();

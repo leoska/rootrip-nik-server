@@ -10,6 +10,7 @@ import cors                  from 'cors';
 import crypto                from 'crypto';
 import moment                from 'moment';
 import fileUpload            from 'express-fileupload';
+import prismaCall            from 'modules/prisma';
 
 const DEFAULT_HTTP_HOST = "0.0.0.0";
 const DEFAULT_HTTP_PORT = 25565;
@@ -323,6 +324,14 @@ export default class HttpServer {
 
                     // Перемещаем файл в пользовательскую папку с именем файлов
                     file.mv(`${startPath}/ufiles/${folderName}/${newFileName}${extname}`);
+
+                    // Логируем заливку файла в бд
+                    await prismaCall('file.create', {
+                        data: {
+                            mime_type: file.mimetype,
+                            file_path: `${folderName}/${newFileName}${extname}`,
+                        }
+                    });
 
                     // Отправляем успешный результат заливки файла 
                     res.status(200).json({

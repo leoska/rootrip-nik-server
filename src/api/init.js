@@ -3,6 +3,7 @@ import { method } from 'modules/utilsMethods';
 import crypto from 'crypto';
 import prismaCall from 'modules/prisma';
 import colors from 'colors';
+import config from 'settings/development.json';
 
 @method("POST")
 export default class Init extends BaseApi {
@@ -26,6 +27,13 @@ export default class Init extends BaseApi {
      */
     get sessionBytesLength() {
         return 16;
+    }
+
+    /**
+     * 
+     */
+    static get defaultCookiesDaysLive() {
+        return 14;
     }
 
     /**
@@ -58,7 +66,7 @@ export default class Init extends BaseApi {
      * @this Init
      * @returns {Promise<boolean>}
      */
-    async process({ }, { browser, resolution, orientation, memory, offsetTimezone, protocol }) {
+    async process({ session }, { browser, resolution, orientation, memory, offsetTimezone, protocol }) {
         const sessionId = crypto.randomBytes(this.sessionBytesLength).toString('base64');
 
         const logObject = {
@@ -89,6 +97,7 @@ export default class Init extends BaseApi {
 
         return {
             sessionId,
+            liveDays: config?.cookies?.liveDays || Init.defaultCookiesDaysLive,
         };
     }
 
