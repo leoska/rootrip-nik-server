@@ -3,10 +3,11 @@
     "plugins": [
         ["@babel/plugin-proposal-decorators", { "legacy": true }],
         ["module-resolver", {
-            "root": ["./src"],
+            "root": ["./"],
             "alias": {
-                "modules/*": "./src/modules",
-                "settings/*": "./settings"
+                "modules": "./src/modules",
+                "settings": "./settings",
+                "services": "./src/services"
             }
         }]
     ],

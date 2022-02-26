@@ -7,7 +7,8 @@
         "emitDecoratorMetadata": true,
         "paths": {
             "modules/*": ["./src/modules/*"],
-            "settings/*": ["./settings/*"]
+            "settings/*": ["./settings/*"],
+            "services/*" : ["./src/services/*"]
         }
     },
     "exclude": ["node_modules"]

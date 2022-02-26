@@ -4,7 +4,6 @@ import nodemailer from 'nodemailer';
 import colors from 'colors';
 import ErrorApiMethod from 'modules/ErrorApiMethod';
 import prismaCall from 'modules/prisma';
-import { existsSync } from 'fs-extra';
 
 @method("POST")
 export default class SendReport extends BaseApi {
@@ -12,7 +11,7 @@ export default class SendReport extends BaseApi {
      * Базовый конструктор класса
      *
      * @constructor
-     * @this Ping
+     * @this SendReport
      */
     constructor() {
         super();
@@ -23,7 +22,7 @@ export default class SendReport extends BaseApi {
      * 
      * @getter
      * @public
-     * @this {SendReport}
+     * @this SendReport
      * @returns {String}
      */
     get emailReceiver() {
@@ -35,7 +34,7 @@ export default class SendReport extends BaseApi {
      * 
      * @getter
      * @public
-     * @this {SendReport}
+     * @this SendReport
      * @returns {Number}
      */
     get maxBodySize() {
@@ -47,7 +46,7 @@ export default class SendReport extends BaseApi {
      * 
      * @private
      * @param {String} category 
-     * @this {SendReport}
+     * @this SendReport
      * @returns {String}
      */
     _getCategory(category) {
@@ -93,6 +92,14 @@ export default class SendReport extends BaseApi {
         }
     }
 
+    /**
+     * Получения HTML-разметки для письма
+     * 
+     * @private
+     * @param {Object} data 
+     * @this SendReport
+     * @returns {String}
+     */
     _getHtml(data) {
         return  `
             <div style="display: flex; flex-direction: column">
@@ -125,9 +132,13 @@ export default class SendReport extends BaseApi {
     };
 
     /**
-     * Дебаговый API-метод для проверки работы сервера
+     * Метод для получения обращения жильцов
      *
+     * @async
+     * @public
      * @override
+     * @param {Object} params
+     * @param {Object} body
      * @this SendReport
      * @returns {Promise<boolean>}
      */

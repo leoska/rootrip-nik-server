@@ -13,28 +13,29 @@ generator client {
 
 model Session {
     @@map(name: "session")
-    id                String    @db.VarChar(24) @id
+    id                String     @db.VarChar(24) @id
     ip_address        String?    @db.VarChar(15)
-    browser           String?    @db.TinyText
+    browser           String?    @db.TinyText()
     os                String?    @db.VarChar(30)
-    resolution_width  Int?       @db.Int
-    resolution_height Int?       @db.Int
+    resolution_width  Int?       @db.Int()
+    resolution_height Int?       @db.Int()
     orientation       Orientation?
-    memory            Float?     @db.Float
-    offset_timezone   Int?       @db.Int 
-    stamp_create      DateTime  @db.Timestamp() @default(now())
-    last_online       DateTime  @db.Timestamp() @updatedAt()
+    memory            Float?     @db.Float()
+    offset_timezone   Int?       @db.Int()
+    stamp_create      DateTime   @db.Timestamp() @default(now())
+    last_online       DateTime   @db.Timestamp() @updatedAt()
     reception         Reception[]
     error             Error[]
+    user              User?
 }
 
 model Events {
     @@map(name: "event")
     id                Int       @default(autoincrement()) @id
-    header_img        String    @db.TinyText
-    header            String    @db.Text
-    description       String    @db.Text
-    body              String    @db.Text
+    header_img        String    @db.TinyText()
+    header            String    @db.Text()
+    description       String    @db.Text()
+    body              String    @db.Text()
     stamp_create      DateTime  @db.Timestamp() @default(now())
     stamp_update      DateTime  @db.Timestamp() @updatedAt()
 }
@@ -42,13 +43,13 @@ model Events {
 model Reception {
     @@map(name: "reception")
     id                Int       @default(autoincrement()) @id
-    name              String    @db.TinyText
-    phone             String    @db.TinyText
-    email             String    @db.TinyText
+    name              String    @db.TinyText()
+    phone             String    @db.TinyText()
+    email             String    @db.TinyText()
     category          String    @db.VarChar(70)
-    body              String    @db.Text
+    body              String    @db.Text()
     session_id        String    @db.VarChar(24)
-    nodemailer        String    @db.TinyText
+    nodemailer        String    @db.TinyText()
     stamp_create      DateTime  @db.Timestamp() @default(now())
     session           Session   @relation(fields: [session_id], references: [id])
 }
@@ -57,7 +58,7 @@ model File {
     @@map(name: "file")
     id                Int       @default(autoincrement()) @id
     mime_type         String    @db.VarChar(100)
-    file_path         String    @db.TinyText
+    file_path         String    @db.TinyText()
     stamp_create      DateTime  @db.Timestamp() @default(now())
 }
 
@@ -65,13 +66,39 @@ model Error {
     @@map(name: "error")
     id                Int       @default(autoincrement()) @id
     session_id        String    @db.VarChar(24)
-    message           String    @db.TinyText
-    stack             String    @db.Text
+    message           String    @db.TinyText()
+    stack             String    @db.Text()
     stamp_create      DateTime  @db.Timestamp() @default(now())
     session           Session   @relation(fields: [session_id], references: [id])
+}
+
+model User {
+    @@map(name: "user")
+    id              Int         @default(autoincrement()) @id
+    login           String      @db.VarChar(100)
+    email           String      @db.TinyText()
+    password        Bytes       @db.Blob()
+    phone           String      @db.TinyText()
+    stamp_create    DateTime    @db.Timestamp() @default(now())
+    last_online     DateTime    @db.Timestamp() @updatedAt()
+    last_session    String      @db.VarChar(24)
+    role            Role        @default(user)
+    is_active       Active      @default(yes)
+    session         Session     @relation(fields: [last_session], references: [id])
 }
 
 enum Orientation {
     portrait
     landscape
+}
+
+enum Active {
+    yes
+    no
+}
+
+enum Role {
+    user
+    moderator
+    admin
 }
