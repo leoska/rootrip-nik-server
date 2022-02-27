@@ -30,15 +30,19 @@ export default class Ping extends BaseApi {
 
         let session_id = JSON.stringify(session);
 
-        if (typeof(session_id) !== 'string')
-            throw new ErrorApiMethod(`Parameter session is [${typeof(session_id)}] but must be string!`, 'I’m a teapot', 418);
+        // Пока закоментировал, т.к. сессия как обязательный параметр тут не требуется
+        // if (typeof(session_id) !== 'string')
+        //     throw new ErrorApiMethod(`Parameter session is [${typeof(session_id)}] but must be string!`, 'I’m a teapot', 418);
 
-        if (session_id.length !== LENGTH_SESSION)
-            throw new ErrorApiMethod(`Parameter session's length must be is 24 symbols.`, 'I’m a teapot', 418);
+        // if (session_id.length !== LENGTH_SESSION)
+        //     throw new ErrorApiMethod(`Parameter session's length must be is 24 symbols.`, 'I’m a teapot', 418);
+
+        if (typeof(session_id) !== 'string' || session_id.length !== LENGTH_SESSION)
+            session_id = undefined;
 
         await prismaCall('error.create', {
             data: {
-                session_id: JSON.stringify(session),
+                session_id,
                 message: JSON.stringify(message),
                 stack: JSON.stringify(stack),
             }
