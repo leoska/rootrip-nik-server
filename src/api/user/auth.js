@@ -1,11 +1,12 @@
 import BaseApi from '../../BaseApi';
-import { method } from 'modules/utilsMethods';
+import { method, log } from 'modules/utilsMethods';
 import ErrorApiMethod from 'modules/ErrorApiMethod';
 import prismaCall from 'modules/prisma';
 import bcrypt from 'bcrypt';
 import config from 'settings/development.json';
 
 @method("POST")
+@log
 export default class UserAuthorize extends BaseApi {
     /**
      * Базовый конструктор класса

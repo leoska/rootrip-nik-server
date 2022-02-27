@@ -1,5 +1,5 @@
 import BaseApi from '../../BaseApi';
-import { method } from 'modules/utilsMethods';
+import { method, log } from 'modules/utilsMethods';
 import TelegramBot from 'src/services/telegramBot';
 
 @method("GET")

@@ -28,6 +28,9 @@ model Session {
     error             Error[]
     user              User?
     file              File[]
+    api               ApiRequest[]
+    event             Events[]   @relation(name: "author_sess")
+    editor            Events[]   @relation(name: "editor_sess")
 }
 
 model Events {
@@ -37,8 +40,17 @@ model Events {
     header            String    @db.Text()
     description       String    @db.Text()
     body              String    @db.Text()
+    author            Int
+    author_session    String    @db.VarChar(24)
+    editor            Int        
+    editor_session    String    @db.VarChar(24)
     stamp_create      DateTime  @db.Timestamp() @default(now())
     stamp_update      DateTime  @db.Timestamp() @updatedAt()
+    stamp_publish     DateTime  @db.Timestamp() @default(now())
+    author_user       User      @relation(name: "author_user", fields: [author], references: [id])
+    author_sess       Session   @relation(name: "author_sess", fields: [author_session], references: [id])
+    editor_user       User      @relation(name: "editor_user", fields: [editor], references: [id])
+    editor_sess       Session   @relation(name: "editor_sess", fields: [editor_session], references: [id])
 }
 
 model Reception {
@@ -58,21 +70,22 @@ model Reception {
 model File {
     @@map(name: "file")
     id                Int       @default(autoincrement()) @id
+    ip_address        String?   @db.VarChar(15)
     mime_type         String    @db.VarChar(100)
     file_path         String    @db.TinyText()
-    session_id        String    @db.VarChar(24)
+    session_id        String?   @db.VarChar(24)
     stamp_create      DateTime  @db.Timestamp() @default(now())
-    session           Session   @relation(fields: [session_id], references: [id])
+    session           Session?  @relation(fields: [session_id], references: [id])
 }
 
 model Error {
     @@map(name: "error")
     id                Int       @default(autoincrement()) @id
-    session_id        String    @db.VarChar(24)
+    session_id        String?   @db.VarChar(24)
     message           String    @db.TinyText()
     stack             String    @db.Text()
     stamp_create      DateTime  @db.Timestamp() @default(now())
-    session           Session   @relation(fields: [session_id], references: [id])
+    session           Session?  @relation(fields: [session_id], references: [id])
 }
 
 model User {
@@ -89,6 +102,8 @@ model User {
     is_active       Active      @default(yes)
     session         Session     @relation(fields: [last_session], references: [id])
     telegram        Telegram?
+    event           Events[]     @relation(name: "author_user")
+    editor          Events[]     @relation(name: "editor_user")
 }
 
 model Telegram {
@@ -100,6 +115,20 @@ model Telegram {
     is_active       Active       @default(yes)
     user            User?        @relation(fields: [user_id], references: [id])
     @@id([username])
+}
+
+model ApiRequest {
+    @@map(name: "api_request")
+    id              Int          @default(autoincrement()) @id
+    session_id      String?      @db.VarChar(24)
+    api             String       @db.VarChar(100)
+    ip_address      String?      @db.VarChar(15)
+    stamp_start     DateTime     @db.Timestamp()
+    stamp_finish    DateTime     @db.Timestamp()
+    duration        Float        @db.Float()
+    status          ApiStatus
+    stamp_create    DateTime     @db.Timestamp() @default(now())
+    session         Session?     @relation(fields: [session_id], references: [id])
 }
 
 enum Orientation {
@@ -116,4 +145,9 @@ enum Role {
     user
     moderator
     admin
+}
+
+enum ApiStatus {
+    completed
+    error
 }

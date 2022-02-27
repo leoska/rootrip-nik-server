@@ -1,11 +1,14 @@
 import BaseApi from '../BaseApi';
-import { method } from 'modules/utilsMethods';
+import { method, log } from 'modules/utilsMethods';
 import crypto from 'crypto';
 import prismaCall from 'modules/prisma';
 import colors from 'colors';
 import config from 'settings/development.json';
 
+const DAY = 86400000;
+
 @method("POST")
+@log
 export default class Init extends BaseApi {
     /**
      * Базовый конструктор класса
@@ -30,7 +33,7 @@ export default class Init extends BaseApi {
     }
 
     /**
-     * 
+     * Дефолтное время жизни cookies
      */
     static get defaultCookiesDaysLive() {
         return 14;
@@ -60,13 +63,46 @@ export default class Init extends BaseApi {
     }
 
     /**
-     * Инициализация сессии и логирование её 
-     *
-     * @override
+     * Проверка сессии пользователя
+     * 
+     * @async
+     * @private
+     * @param {String} sessionId 
      * @this Init
-     * @returns {Promise<boolean>}
+     * @returns {Promise<Boolean>}
      */
-    async process({ session }, { browser, resolution, orientation, memory, offsetTimezone, protocol }) {
+    async _checkValidSession(sessionId) {
+        if (!sessionId || typeof(sessionId) !== "string" || sessionId.length !== 24)
+            return false;
+
+        const sessionDb = await prismaCall('session.findFirst', {
+            select: {
+                stamp_create: true,
+            },
+            where: {
+                id: sessionId
+            }
+        });
+
+        if (!sessionDb)
+            return false;
+
+        const timeNow = Date.now();
+        const days = config?.cookies?.liveDays || Init.defaultCookiesDaysLive;
+        const lifeTime = DAY * days;
+
+        return sessionDb.stamp_create.getTime() + lifeTime > timeNow;
+    }
+
+    /**
+     * Получение новой сессии
+     * 
+     * @async
+     * @private
+     * @this Init
+     * @returns {Promise<String>}
+     */
+    async _getNewSession({ browser, resolution, orientation, memory, offsetTimezone, protocol }) {
         const sessionId = crypto.randomBytes(this.sessionBytesLength).toString('base64');
 
         const logObject = {
@@ -94,6 +130,25 @@ export default class Init extends BaseApi {
                 offset_timezone: offsetTimezone,
             }
         });
+
+        return sessionId;
+    }
+
+    /**
+     * Инициализация сессии и логирование её 
+     *
+     * @async
+     * @public
+     * @override
+     * @param {Object} body
+     * @this Init
+     * @returns {Promise<boolean>}
+     */
+    async process({ session }, body) {
+        // Проверяем текущую сессию у пользователя
+        const needNewSession = !(await this._checkValidSession(session));
+        
+        const sessionId = needNewSession ? await this._getNewSession(body) : session;
 
         return {
             sessionId,

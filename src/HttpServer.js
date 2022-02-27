@@ -246,6 +246,7 @@ export default class HttpServer {
             }
             
             const apiInstance = new api(method);
+            apiInstance.ip = ip;
             apiInstance.params = reqParams;
             apiInstance.body = reqBody;
             apiInstance.headers = reqHeaders;
@@ -297,6 +298,7 @@ export default class HttpServer {
         // req.headers["x-forwarded-for"] <-- этот заголовок обычно вкладывается NGINX'ом
         const ip = req.headers["x-forwarded-for"] || req.connection.remoteAddress;
         const files = req.files;
+        const session = req?.query?.session;
 
         try {
             if (!files || !files.file) 
@@ -328,6 +330,8 @@ export default class HttpServer {
                     // Логируем заливку файла в бд
                     await prismaCall('file.create', {
                         data: {
+                            session_id: session,
+                            ip_address: ip,
                             mime_type: file.mimetype,
                             file_path: `${folderName}/${newFileName}${extname}`,
                         }

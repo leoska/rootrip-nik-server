@@ -1,11 +1,12 @@
 import BaseApi from '../BaseApi';
-import { method } from 'modules/utilsMethods';
+import { method, log } from 'modules/utilsMethods';
 import nodemailer from 'nodemailer';
 import colors from 'colors';
 import ErrorApiMethod from 'modules/ErrorApiMethod';
 import prismaCall from 'modules/prisma';
 
 @method("POST")
+@log
 export default class SendReport extends BaseApi {
     /**
      * Базовый конструктор класса
