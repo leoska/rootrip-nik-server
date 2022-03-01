@@ -7,7 +7,7 @@ import ErrorApiMethod from 'modules/ErrorApiMethod';
 const LENGTH_SESSION = 24;
 
 @method("POST")
-export default class Ping extends BaseApi {
+export default class Error extends BaseApi {
     /**
      * Базовый конструктор класса
      *
